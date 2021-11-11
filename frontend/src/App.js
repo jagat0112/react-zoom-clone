@@ -8,11 +8,14 @@ const socket = io("http://localhost:5001");
 function App() {
   const [stream, setStream] = useState("");
   const [me, setMe] = useState("");
+  const [name, setName] = useState("");
   const [peerId, setPeerId] = useState("");
   const [callerSignal, setCallerSignal] = useState("");
   const [caller, setCaller] = useState("");
+  const [callerName, setCallerName] = useState("");
   const [recievingCall, setRecievingCall] = useState(false);
   const [callAccepted, setCallAccepted] = useState(false);
+  const [callEnded, setCallEnded] = useState(false);
 
   const myVideo = useRef();
   const userVideo = useRef();
@@ -37,6 +40,13 @@ function App() {
       setCallerSignal(data.signal);
       setCaller(data.from);
       setRecievingCall(true);
+      setCallerName(data.callerName);
+    });
+
+    // Call ended
+    socket.on("callEnded", () => {
+      setCallEnded(true);
+      setCallAccepted(false);
     });
   }, []);
 
@@ -47,7 +57,7 @@ function App() {
       stream: stream,
     });
     peer.on("signal", (data) => {
-      socket.emit("callUser", { signal: data, userToCall: id, from: me });
+      socket.emit("callUser", { signal: data, userToCall: id, from: me, name });
     });
 
     peer.on("stream", (stream) => {
@@ -85,14 +95,40 @@ function App() {
     peer.signal(callerSignal);
   };
 
+  const endCall = () => {
+    setCallEnded(true);
+    setCallAccepted(false);
+    setRecievingCall(false);
+
+    socket.emit("endCall", { peer: peerId || caller });
+  };
+
+  const shareScreen = async () => {
+    myVideo.current.srcObject = await navigator.mediaDevices.getDisplayMedia({
+      video: {
+        cursor: "always",
+      },
+      audio: true,
+    });
+  };
+
   return (
     <div className="App">
       <header className="App-header">
         <h1>ZOOM CLONE</h1>
         {recievingCall && !callAccepted && (
-          <div>
-            <p>{caller} is calling......</p>
-            <button onClick={answerCall}>ANSWER</button>
+          <div className="incoming-call-card" style={{ margin: "20px" }}>
+            <p>{callerName} is calling......</p>
+            <button onClick={answerCall} style={{ backgroundColor: "green" }}>
+              ANSWER
+            </button>
+            <button
+              onClick={answerCall}
+              style={{ backgroundColor: "red" }}
+              onClick={endCall}
+            >
+              REJECT
+            </button>
           </div>
         )}
         <video
@@ -102,23 +138,34 @@ function App() {
           muted
           style={{ width: "300px" }}
         />
-        {callAccepted && (
-          <video
-            playsInline
-            ref={userVideo}
-            autoPlay
-            muted
-            style={{ width: "300px" }}
-          />
+        {callAccepted && <button onClick={shareScreen}>Share my Screen</button>}
+        {callAccepted && !callEnded && (
+          <React.Fragment>
+            <video
+              playsInline
+              ref={userVideo}
+              autoPlay
+              muted
+              style={{ width: "300px" }}
+            />
+            <button onClick={endCall}>End Call</button>
+          </React.Fragment>
         )}
         <p>{me}</p>
         <form
           onSubmit={(e) => {
             e.preventDefault();
             callUser(peerId);
-            console.log("submited");
           }}
         >
+          <input
+            type="text"
+            placeholder="Your Name"
+            value={name}
+            onChange={(e) => {
+              setName(e.target.value);
+            }}
+          ></input>
           <input
             type="text"
             placeholder="ID to call"

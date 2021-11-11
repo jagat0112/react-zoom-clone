@@ -36,3 +36,27 @@
     transform: rotate(360deg);
   }
 }
+
+input,
+button {
+  font-size: large;
+  margin: 0 5px;
+}
+
+input {
+  padding: 5px;
+}
+
+button {
+  background-color: #aa0000;
+  border: none;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 5%;
+}
+
+.incoming-call-card {
+  background-color: #5c6577;
+  padding: 20px;
+  border-radius: 10px;
+}

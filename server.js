@@ -19,11 +19,16 @@ io.on("connection", (socket) => {
     io.to(data.userToCall).emit("callUser1", {
       signal: data.signal,
       from: data.from,
+      callerName: data.name,
     });
   });
 
   socket.on("answerCall", (data) => {
     io.to(data.to).emit("callAccepted", { signal: data.signal });
+  });
+
+  socket.on("endCall", (data) => {
+    io.to(data.peer).emit("callEnded");
   });
 });
 
