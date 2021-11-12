@@ -103,15 +103,6 @@ function App() {
     socket.emit("endCall", { peer: peerId || caller });
   };
 
-  const shareScreen = async () => {
-    myVideo.current.srcObject = await navigator.mediaDevices.getDisplayMedia({
-      video: {
-        cursor: "always",
-      },
-      audio: true,
-    });
-  };
-
   return (
     <div className="App">
       <header className="App-header">
@@ -138,7 +129,6 @@ function App() {
           muted
           style={{ width: "300px" }}
         />
-        {callAccepted && <button onClick={shareScreen}>Share my Screen</button>}
         {callAccepted && !callEnded && (
           <React.Fragment>
             <video
